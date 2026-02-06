@@ -146,11 +146,11 @@
             font-family: 'Playfair Display', Georgia, serif;
             font-weight: 700;
             letter-spacing: 0.5px;
-            position: relative;
-            overflow: hidden;
         }
 
         .btn-yes {
+            position: relative;
+            overflow: hidden;
             border: none;
             background: linear-gradient(135deg, #e91e63, #c2185b);
             color: white;
@@ -184,13 +184,8 @@
             color: #c2185b;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
             backdrop-filter: blur(5px);
-            transition: transform 0.15s ease, left 0.01s, top 0.01s;
-        }
-
-        .btn-no.escaped {
-            position: fixed;
-            z-index: 100;
             transition: none;
+            white-space: nowrap;
         }
 
         /* ---- Glow ring on Yes ---- */
@@ -413,7 +408,6 @@
         // ---- No button escape ----
         const btnNo = document.getElementById('btnNo');
         const btnYes = document.getElementById('btnYes');
-        const buttonsRow = document.getElementById('buttonsRow');
         const mainScreen = document.getElementById('mainScreen');
         const yesScreen = document.getElementById('yesScreen');
 
@@ -429,35 +423,39 @@
         function escapeButton() {
             if (!escaped) {
                 escaped = true;
-                const rect = btnNo.getBoundingClientRect();
-                btnNo.classList.add('escaped');
-                btnNo.style.left = rect.left + 'px';
-                btnNo.style.top = rect.top + 'px';
-                btnNo.style.width = rect.width + 'px';
+                // Move button out of the flex row into body as fixed
+                document.body.appendChild(btnNo);
+                btnNo.style.position = 'fixed';
+                btnNo.style.zIndex = '100';
             }
 
-            const margin = 100;
+            // Get actual button size
             const bw = btnNo.offsetWidth;
             const bh = btnNo.offsetHeight;
-            const maxX = window.innerWidth - bw - margin;
-            const maxY = window.innerHeight - bh - margin;
-            const newX = Math.random() * (maxX - margin) + margin;
-            const newY = Math.random() * (maxY - margin) + margin;
 
-            btnNo.style.left = newX + 'px';
-            btnNo.style.top = newY + 'px';
+            // Keep within visible screen with padding
+            const pad = 20;
+            const x = pad + Math.random() * Math.max(0, window.innerWidth - bw - pad * 2);
+            const y = pad + Math.random() * Math.max(0, window.innerHeight - bh - pad * 2);
+
+            btnNo.style.left = x + 'px';
+            btnNo.style.top = y + 'px';
 
             escapeCount++;
             if (escapeCount < noTexts.length) {
                 btnNo.textContent = noTexts[escapeCount];
             }
 
-            // Yes grows
+            // Make Yes grow
             const scale = 1 + escapeCount * 0.12;
             btnYes.style.transform = `scale(${Math.min(scale, 2.2)})`;
         }
 
         btnNo.addEventListener('mouseenter', escapeButton);
+        btnNo.addEventListener('click', (e) => {
+            e.preventDefault();
+            escapeButton();
+        });
         btnNo.addEventListener('touchstart', (e) => {
             e.preventDefault();
             escapeButton();
@@ -466,7 +464,7 @@
         // ---- Yes button ----
         btnYes.addEventListener('click', () => {
             mainScreen.style.display = 'none';
-            if (escaped) btnNo.style.display = 'none';
+            btnNo.style.display = 'none';
             yesScreen.style.display = 'block';
 
             // explosion hearts
